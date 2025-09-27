@@ -96,7 +96,7 @@ N_FFT  = 1024
 ROLL_SEC = 3.0             # seconds of rolling display
 ROLL_SAMPLES = int(ROLL_SEC * SR)
 MAX_Y_HZ = 4000            # display limit for spectrogram
-SMOOTH_N = 3               # moving average window for F1/F2 (frames)
+SMOOTH_N = 5               # moving average window for F1/F2 (frames)
 
 DEFAULT_VOWELS = ["/a/", "/i/", "/u/", "/e/", "/o/", "/æ/", "/ɪ/", "/ʊ/"]
 
@@ -497,11 +497,11 @@ def _dtw_distance_2d(a: np.ndarray, b: np.ndarray) -> float:
 
 # Tunables for sensitivity
 SIMILARITY_RESAMPLED_POINTS = 60
-SIMILARITY_ALPHA = 2.5  # higher -> more敏感 for Procrustes/DTW
-SIMILARITY_BETA = 0.8   # dtw scaling
-WEIGHT_PROCRUSTES = 0.35
-WEIGHT_CORRELATION = 0.4
-WEIGHT_DTW = 0.25
+SIMILARITY_ALPHA = 1.6  # higher -> more敏感 for Procrustes/DTW
+SIMILARITY_BETA = 0.6   # dtw scaling
+WEIGHT_PROCRUSTES = 0.3
+WEIGHT_CORRELATION = 0.5
+WEIGHT_DTW = 0.2
 
 def compute_shape_similarity_percent(template: np.ndarray, f1s: np.ndarray, f2s: np.ndarray, num_points: int = SIMILARITY_RESAMPLED_POINTS) -> Optional[int]:
     """Compute integer percent similarity of live F1/F2 trajectory shape vs template.
