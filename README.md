@@ -1,4 +1,4 @@
-﻿# rara.thesis_chinese-vowel
+# rara.thesis_japanese-vowel
 1.ファイルをすべてダウンロードする
 
 

@@ -109,14 +109,11 @@ MEANS_CSV_CANDIDATES = [
 FLAT_TEMPLATE_POINTS = 7  # number of points for flat template made from means
 
 # Optional: Paste your table text directly here. Leave empty if not used.
-# 支援貼上以逗號、Tab 或多空白分隔的三欄：檔名  F1  F2
-# 範例：
 #   a.wav,1022.32,1542.13
 #   Ü (yu).wav\t827.16\t2142.63
 PASTED_TABLE: str = ""
 
 # Hardcoded means dictionary: label or filename -> {"F1": value, "F2": value}
-# 備註：鍵名可包含 .wav；系統會自動忽略副檔名並轉為「/label/」格式
 HARDCODED_MEANS: Dict[str, Dict[str, float]] = {}
 
 # ---------------------- Visualization Settings ----------------------
@@ -125,7 +122,7 @@ SHOW_SPECTROGRAM = False
 
 # ---------------------- Templates ----------------------
 def _example_templates() -> Dict[str, np.ndarray]:
-    # 示意模板（請以你的ネイティブ量測替換）
+    
     return {
         "/a/": np.array([[800,1200],[750,1300],[700,1400],[650,1500],[600,1600]], dtype=float),
         "/i/": np.array([[300,2300],[320,2400],[340,2500],[330,2450],[320,2400]], dtype=float),
@@ -497,8 +494,8 @@ def _dtw_distance_2d(a: np.ndarray, b: np.ndarray) -> float:
 
 # Tunables for sensitivity
 SIMILARITY_RESAMPLED_POINTS = 60
-SIMILARITY_ALPHA = 1.6  # higher -> more敏感 for Procrustes/DTW
-SIMILARITY_BETA = 0.6   # dtw scaling
+SIMILARITY_ALPHA = 1.6  
+SIMILARITY_BETA = 0.6   
 WEIGHT_PROCRUSTES = 0.3
 WEIGHT_CORRELATION = 0.5
 WEIGHT_DTW = 0.2
@@ -576,7 +573,7 @@ class State:
 class VowelLiveApp:
     def __init__(self, master):
         self.master = master
-        master.title("Vowel Live Compare — ytj lab")
+        master.title("母音ライブ比較 — ytj lab")
         # Set white background for Tk root and ttk widgets
         master.configure(bg="white")
         style = ttk.Style(master)
@@ -590,7 +587,7 @@ class VowelLiveApp:
         frm = ttk.Frame(master)
         frm.pack(side=tk.TOP, fill=tk.X, padx=8, pady=8)
 
-        ttk.Label(frm, text="母音 / Vowel:").pack(side=tk.LEFT)
+        ttk.Label(frm, text="母音:").pack(side=tk.LEFT)
         self.vowel_var = tk.StringVar(value=self.state.current_vowel)
         # Dynamic width based on longest label length (min 6)
         dyn_width = max(6, max((len(v) for v in VOWEL_LIST), default=6))
@@ -598,12 +595,12 @@ class VowelLiveApp:
         self.vowel_menu.pack(side=tk.LEFT, padx=6)
         self.vowel_menu.bind("<<ComboboxSelected>>", self.on_select_vowel)
 
-        self.btn_start = ttk.Button(frm, text="Start", command=self.start)
+        self.btn_start = ttk.Button(frm, text="開始", command=self.start)
         self.btn_start.pack(side=tk.LEFT, padx=6)
-        self.btn_stop  = ttk.Button(frm, text="Stop", command=self.stop, state=tk.DISABLED)
+        self.btn_stop  = ttk.Button(frm, text="停止", command=self.stop, state=tk.DISABLED)
         self.btn_stop.pack(side=tk.LEFT, padx=6)
 
-        self.info_var = tk.StringVar(value="準備就緒 Ready")
+        self.info_var = tk.StringVar(value=" 準備完了")
         ttk.Label(master, textvariable=self.info_var).pack(side=tk.TOP, anchor="w", padx=8)
 
         # Matplotlib Figure: split F1 / F2 into separate subplots
@@ -611,10 +608,10 @@ class VowelLiveApp:
         self.fig.patch.set_facecolor("white")
         self.ax_f1.set_facecolor("white")
         self.ax_f2.set_facecolor("white")
-        self.fig.suptitle("Formants (F1 / F2)")
-        self.ax_f1.set_ylabel("口の大きさ")
-        self.ax_f2.set_ylabel("舌の位置")
-        self.ax_f2.set_xlabel("Time (s)")
+        self.fig.suptitle("フォルマント（F1／F2）")
+        self.ax_f1.set_ylabel("口の開き（F1）")
+        self.ax_f2.set_ylabel("舌の前後（F2）")
+        self.ax_f2.set_xlabel("時間（秒）")
         self.ax_f1.set_ylim(0, MAX_Y_HZ)
         self.ax_f2.set_ylim(0, MAX_Y_HZ)
         # Show semantic scale labels for mouth opening on F1 axis
@@ -648,7 +645,7 @@ class VowelLiveApp:
 
     def on_select_vowel(self, event):
         self.state.current_vowel = self.vowel_var.get()
-        self.info_var.set(f"Vowel selected: {self.state.current_vowel}")
+        self.info_var.set(f"母音を選択: {self.state.current_vowel}")
         # refresh overlay immediately on next update
         self._redraw(force_overlay_only=True)
 
@@ -669,7 +666,7 @@ class VowelLiveApp:
         self.state.running = True
         self.btn_start.config(state=tk.DISABLED)
         self.btn_stop.config(state=tk.NORMAL)
-        self.info_var.set(f"Running… current vowel: {self.state.current_vowel}")
+        self.info_var.set(f"実行中… 現在の母音: {self.state.current_vowel}")
 
         self.stream = sd.InputStream(
             callback=self._audio_callback,
@@ -684,7 +681,7 @@ class VowelLiveApp:
         self.state.running = False
         self.btn_start.config(state=tk.NORMAL)
         self.btn_stop.config(state=tk.DISABLED)
-        self.info_var.set("Stopped")
+        self.info_var.set("停止しました")
         try:
             if self.stream:
                 self.stream.stop()
@@ -725,8 +722,8 @@ class VowelLiveApp:
             t_max = 1.0
         tx = np.linspace(0, t_max, K)
         # Plot dashed lines for native template to respective axes
-        self.ax_f1.plot(tx, traj[:, 0], linestyle="--", linewidth=1, label="Native F1 (template)")
-        self.ax_f2.plot(tx, traj[:, 1], linestyle="--", linewidth=1, label="Native F2 (template)")
+        self.ax_f1.plot(tx, traj[:, 0], linestyle="--", linewidth=1, label="母語 F1（テンプレ）")
+        self.ax_f2.plot(tx, traj[:, 1], linestyle="--", linewidth=1, label="母語 F2（テンプレ）")
 
     def _redraw(self, force_overlay_only: bool = False):
         # Draw trajectories on separate axes
@@ -734,10 +731,10 @@ class VowelLiveApp:
         self.ax_f2.clear()
         self.ax_f1.set_facecolor("white")
         self.ax_f2.set_facecolor("white")
-        self.fig.suptitle(f"Formants (F1 / F2) | Vowel: {self.state.current_vowel}")
-        self.ax_f1.set_ylabel("口の大きさ")
-        self.ax_f2.set_ylabel("舌の位置")
-        self.ax_f2.set_xlabel("Time (s)")
+        self.fig.suptitle(f"フォルマント（F1／F2）｜母音: {self.state.current_vowel}")
+        self.ax_f1.set_ylabel("口の開き（F1）")
+        self.ax_f2.set_ylabel("舌の前後（F2）")
+        self.ax_f2.set_xlabel("時間（秒）")
         self.ax_f1.set_ylim(0, MAX_Y_HZ)
         self.ax_f2.set_ylim(0, MAX_Y_HZ)
         # Show semantic scale labels for mouth opening on F1 axis
@@ -760,8 +757,8 @@ class VowelLiveApp:
 
         # Overlay live trajectories
         if t.size > 0:
-            self.ax_f1.plot(t, f1s, linewidth=2, label="Speaker F1 (live)")
-            self.ax_f2.plot(t, f2s, linewidth=2, label="Speaker F2 (live)")
+            self.ax_f1.plot(t, f1s, linewidth=2, label="話者 F1（ライブ）")
+            self.ax_f2.plot(t, f2s, linewidth=2, label="話者 F2（ライブ）")
 
         # Compute and display shape similarity as integer percent
         similarity_pct: Optional[int] = None
@@ -776,10 +773,10 @@ class VowelLiveApp:
 
         if similarity_pct is not None:
             base_msg = (
-                f"Running… current vowel: {self.state.current_vowel}"
-                if self.state.running else f"Vowel: {self.state.current_vowel}"
+                f"実行中… 現在の母音: {self.state.current_vowel}"
+                if self.state.running else f"母音: {self.state.current_vowel}"
             )
-            self.info_var.set(f"{base_msg} | 発音スコア(類似度): {similarity_pct}%")
+            self.info_var.set(f"{base_msg} ｜ 発音の類似度: {similarity_pct}%")
 
         # Legends (avoid duplicates) for each axis
         for axis in (self.ax_f1, self.ax_f2):
@@ -815,33 +812,33 @@ class VowelLiveApp:
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Vowel Live Compare")
+    parser = argparse.ArgumentParser(description="母音ライブ比較")
     parser.add_argument(
         "--build-templates",
         dest="build_templates_dir",
         type=str,
         default=None,
-        help="Directory containing WAV files to build templates.json",
+        help="templates.json を作る元 WAV が入っているディレクトリ",
     )
     parser.add_argument(
         "--points",
         dest="tpl_points",
         type=int,
         default=60,
-        help="Number of points per template when building from WAV (default: 60)",
+        help="WAV からテンプレを作るときの点数（既定: 60）",
     )
     parser.add_argument(
         "--output",
         dest="output_json",
         type=str,
         default=None,
-        help="Output templates.json path (default: script directory)",
+        help="出力 templates.json のパス（既定: スクリプトと同じフォルダ）",
     )
     parser.add_argument(
         "--no-recursive",
         dest="no_recursive",
         action="store_true",
-        help="Do not search WAV files recursively",
+        help="WAV を再帰的に検索しない",
     )
 
     args = parser.parse_args()
